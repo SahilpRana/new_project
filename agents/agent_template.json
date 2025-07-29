@@ -1,0 +1,8 @@
+{
+  "agent_id": "agent_temp_predictor",
+  "description": "Predicts temperature using location, solar radiation (ASSD), and time.",
+  "input": ["location", "datetime", "ASSD"],
+  "output": ["temperature"],
+  "model": "models/temp_model.pkl",
+  "status": "active"
+}
