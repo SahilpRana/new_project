@@ -4,12 +4,14 @@ import numpy as np
 import pandas as pd
 import joblib
 from tensorflow.keras.models import load_model
+import os
 
-
+# Default parameters for energy calculations
 DEFAULT_AREA = 1000.0       # m² for data center roof
 DEFAULT_ROTOR_AREA = 200.0  # m² for wind turbine
 DEFAULT_EFFICIENCY = 20     # % solar panel efficiency
 
+# Cooling factor mapping (temperature → n_factor)
 N_FACTORS = {
     0: 0.1, 5: 0.2, 10: 0.4, 15: 0.6, 20: 0.75,
     25: 0.9, 30: 1.0, 35: 1.1, 40: 1.25
@@ -21,7 +23,7 @@ def get_n_factor(temp):
 
 def calculate_solar_energy(assd, area, efficiency):
     daily_energy = assd * area * (efficiency / 100.0)  # kWh/day
-    return daily_energy * 30  # monthly
+    return daily_energy * 30  # monthly estimate
 
 def calculate_wind_energy(ws, rotor_area):
     rho = 1.225  # air density kg/m³
@@ -34,12 +36,13 @@ def calculate_cooling_energy(temp, area):
 
 class ChainedPredictor:
     def __init__(self, model_paths):
+        # Load models
         self.model_assd = load_model(model_paths['assd'])
         self.model_temp = joblib.load(model_paths['temp'])
         self.model_sp   = joblib.load(model_paths['sp'])
         self.model_wind = joblib.load(model_paths['wind'])
 
-        # Load preprocessors
+        # Load encoders & scalers
         self.encoder1 = joblib.load(model_paths['encoder1'])
         self.scaler1  = joblib.load(model_paths['scaler1'])
         self.encoder2 = joblib.load(model_paths['encoder2'])
@@ -49,7 +52,7 @@ class ChainedPredictor:
         self.encoder4 = joblib.load(model_paths['encoder4'])
         self.scaler4  = joblib.load(model_paths['scaler4'])
 
-        # Feature names
+        # Feature names (for reindexing)
         self.num_cols1 = list(self.scaler1.feature_names_in_)
         self.num_cols2 = list(self.scaler2.feature_names_in_)
         self.num_cols3 = list(self.scaler3.feature_names_in_)
@@ -126,8 +129,15 @@ class ChainedPredictor:
             'wind speed(m/s)': wind_pred
         }
 
+# FastAPI App Setup
 app = FastAPI(title="Chained Predictor API with Energy Calculations")
 
+# Root route for quick check
+@app.get("/")
+async def root():
+    return {"message": "API is running. Use POST /predict"}
+
+# Request schema
 class PredictRequest(BaseModel):
     region: str
     country: str
@@ -137,23 +147,27 @@ class PredictRequest(BaseModel):
     rotor_area: float = DEFAULT_ROTOR_AREA
     efficiency: float = DEFAULT_EFFICIENCY
 
+# Model paths (relative to current file)
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 model_paths = {
-    'assd':     r'C:\Users\sahil\new_project\new_project\CarbonSync\Models\assd_lstm_model.keras',
-    'temp':     r'C:\Users\sahil\new_project\new_project\CarbonSync\Models\temp.pkl',
-    'sp':       r'C:\Users\sahil\new_project\new_project\CarbonSync\Models\SP.pkl',
-    'wind':     r'C:\Users\sahil\new_project\new_project\CarbonSync\Models\wind_speed.pkl',
-    'encoder1': r'C:\Users\sahil\new_project\new_project\CarbonSync\Models\encoder1.pkl',
-    'scaler1':  r'C:\Users\sahil\new_project\new_project\CarbonSync\Models\scaler1.pkl',
-    'encoder2': r'C:\Users\sahil\new_project\new_project\CarbonSync\Models\encoder2.pkl',
-    'scaler2':  r'C:\Users\sahil\new_project\new_project\CarbonSync\Models\scaler2.pkl',
-    'encoder3': r'C:\Users\sahil\new_project\new_project\CarbonSync\Models\encoder3.pkl',
-    'scaler3':  r'C:\Users\sahil\new_project\new_project\CarbonSync\Models\scaler3.pkl',
-    'encoder4': r'C:\Users\sahil\new_project\new_project\CarbonSync\Models\encoder4.pkl',
-    'scaler4':  r'C:\Users\sahil\new_project\new_project\CarbonSync\Models\scaler4.pkl'
+    'assd':     os.path.join(BASE_DIR, "Models", "assd_lstm_model.keras"),
+    'temp':     os.path.join(BASE_DIR, "Models", "temp.pkl"),
+    'sp':       os.path.join(BASE_DIR, "Models", "SP.pkl"),
+    'wind':     os.path.join(BASE_DIR, "Models", "wind_speed.pkl"),
+    'encoder1': os.path.join(BASE_DIR, "Models", "encoder1.pkl"),
+    'scaler1':  os.path.join(BASE_DIR, "Models", "scaler1.pkl"),
+    'encoder2': os.path.join(BASE_DIR, "Models", "encoder2.pkl"),
+    'scaler2':  os.path.join(BASE_DIR, "Models", "scaler2.pkl"),
+    'encoder3': os.path.join(BASE_DIR, "Models", "encoder3.pkl"),
+    'scaler3':  os.path.join(BASE_DIR, "Models", "scaler3.pkl"),
+    'encoder4': os.path.join(BASE_DIR, "Models", "encoder4.pkl"),
+    'scaler4':  os.path.join(BASE_DIR, "Models", "scaler4.pkl")
 }
 
+# Initialize predictor
 predictor = ChainedPredictor(model_paths)
 
+# Predict endpoint
 @app.post("/predict")
 async def predict(data: PredictRequest):
     # Climate predictions
