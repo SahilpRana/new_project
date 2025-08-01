@@ -1,0 +1,270 @@
+{
+  "data": [
+    {
+      "region": "Asia",
+      "years_forecast": 15,
+      "top_countries": [
+        {
+          "country": "Jordan",
+          "solar_energy": 6410229.15,
+          "wind_energy": 271095.34,
+          "cooling_energy": 93515.87,
+          "score": 6587808.62,
+          "rank": 1
+        },
+        {
+          "country": "Afghanistan",
+          "solar_energy": 6311225.57,
+          "wind_energy": 73745.42,
+          "cooling_energy": 36114.97,
+          "score": 6348856.02,
+          "rank": 2
+        },
+        {
+          "country": "Philippines",
+          "solar_energy": 5771958.67,
+          "wind_energy": 674788.93,
+          "cooling_energy": 124665.02,
+          "score": 6322082.58,
+          "rank": 3
+        },
+        {
+          "country": "Iran (Islamic Republic of)",
+          "solar_energy": 6252530.03,
+          "wind_energy": 147879.91,
+          "cooling_energy": 91331.91,
+          "score": 6309078.03,
+          "rank": 4
+        },
+        {
+          "country": "Pakistan",
+          "solar_energy": 6251269.86,
+          "wind_energy": 75694.76,
+          "cooling_energy": 91388.4,
+          "score": 6235576.22,
+          "rank": 5
+        }
+      ],
+      "best_country": "Jordan"
+    },
+    {
+      "region": "Europe",
+      "years_forecast": 15,
+      "top_countries": [
+        {
+          "country": "Malta",
+          "solar_energy": 5596459.15,
+          "wind_energy": 735301.99,
+          "cooling_energy": 96555.14,
+          "score": 6235206.0,
+          "rank": 1
+        },
+        {
+          "country": "Cyprus",
+          "solar_energy": 5638807.48,
+          "wind_energy": 207016.25,
+          "cooling_energy": 95907.95,
+          "score": 5749915.78,
+          "rank": 2
+        },
+        {
+          "country": "Turkey",
+          "solar_energy": 5460403.25,
+          "wind_energy": 84849.39,
+          "cooling_energy": 61827.31,
+          "score": 5483425.33,
+          "rank": 3
+        },
+        {
+          "country": "Portugal",
+          "solar_energy": 5339208.26,
+          "wind_energy": 121190.21,
+          "cooling_energy": 77257.37,
+          "score": 5383141.1,
+          "rank": 4
+        },
+        {
+          "country": "Monaco",
+          "solar_energy": 4939898.09,
+          "wind_energy": 299161.51,
+          "cooling_energy": 83788.93,
+          "score": 5155270.67,
+          "rank": 5
+        }
+      ],
+      "best_country": "Malta"
+    },
+    {
+      "region": "Pacific",
+      "years_forecast": 15,
+      "top_countries": [
+        {
+          "country": "Polynesia",
+          "solar_energy": 6119243.55,
+          "wind_energy": 747857.69,
+          "cooling_energy": 121497.56,
+          "score": 6745603.69,
+          "rank": 1
+        },
+        {
+          "country": "Australia",
+          "solar_energy": 5484059.6,
+          "wind_energy": 945861.93,
+          "cooling_energy": 114938.25,
+          "score": 6314983.28,
+          "rank": 2
+        },
+        {
+          "country": "New Zeland",
+          "solar_energy": 4833012.78,
+          "wind_energy": 211959.23,
+          "cooling_energy": 78526.47,
+          "score": 4966445.55,
+          "rank": 3
+        }
+      ],
+      "best_country": "Polynesia"
+    },
+    {
+      "region": "Middle East and North Africa",
+      "years_forecast": 15,
+      "top_countries": [
+        {
+          "country": "Mauritania",
+          "solar_energy": 6864902.8,
+          "wind_energy": 582388.38,
+          "cooling_energy": 109618.61,
+          "score": 7337672.57,
+          "rank": 1
+        },
+        {
+          "country": "Sudan",
+          "solar_energy": 7116437.04,
+          "wind_energy": 263059.56,
+          "cooling_energy": 125150.2,
+          "score": 7254346.4,
+          "rank": 2
+        },
+        {
+          "country": "Saudi Arabia",
+          "solar_energy": 6720925.07,
+          "wind_energy": 151244.82,
+          "cooling_energy": 116495.75,
+          "score": 6755674.15,
+          "rank": 3
+        },
+        {
+          "country": "Kuwait",
+          "solar_energy": 6224008.36,
+          "wind_energy": 449472.35,
+          "cooling_energy": 118428.66,
+          "score": 6555052.05,
+          "rank": 4
+        },
+        {
+          "country": "United Arab Emirates",
+          "solar_energy": 6387726.77,
+          "wind_energy": 219545.39,
+          "cooling_energy": 124507.52,
+          "score": 6482764.65,
+          "rank": 5
+        }
+      ],
+      "best_country": "Mauritania"
+    },
+    {
+      "region": "Americas",
+      "years_forecast": 15,
+      "top_countries": [
+        {
+          "country": "Trinidad and Tobago",
+          "solar_energy": 6006882.31,
+          "wind_energy": 825267.1,
+          "cooling_energy": 121921.68,
+          "score": 6710227.73,
+          "rank": 1
+        },
+        {
+          "country": "Argentina",
+          "solar_energy": 6237958.1,
+          "wind_energy": 424738.17,
+          "cooling_energy": 82522.59,
+          "score": 6580173.68,
+          "rank": 2
+        },
+        {
+          "country": "Guatemala",
+          "solar_energy": 5911077.02,
+          "wind_energy": 674775.29,
+          "cooling_energy": 124247.06,
+          "score": 6461605.26,
+          "rank": 3
+        },
+        {
+          "country": "Dominican Republic",
+          "solar_energy": 5763840.34,
+          "wind_energy": 786785.42,
+          "cooling_energy": 124151.6,
+          "score": 6426474.15,
+          "rank": 4
+        },
+        {
+          "country": "Peru",
+          "solar_energy": 5827328.98,
+          "wind_energy": 455457.44,
+          "cooling_energy": 124958.03,
+          "score": 6157828.39,
+          "rank": 5
+        }
+      ],
+      "best_country": "Trinidad and Tobago"
+    },
+    {
+      "region": "Sub-Saharan Africa",
+      "years_forecast": 15,
+      "top_countries": [
+        {
+          "country": "Cape Verde",
+          "solar_energy": 7437892.27,
+          "wind_energy": 274315.05,
+          "cooling_energy": 111271.21,
+          "score": 7600936.11,
+          "rank": 1
+        },
+        {
+          "country": "Zimbabwe",
+          "solar_energy": 7252154.17,
+          "wind_energy": 313333.32,
+          "cooling_energy": 118437.36,
+          "score": 7447050.13,
+          "rank": 2
+        },
+        {
+          "country": "Namibia",
+          "solar_energy": 7259805.9,
+          "wind_energy": 223080.84,
+          "cooling_energy": 106108.21,
+          "score": 7376778.53,
+          "rank": 3
+        },
+        {
+          "country": "Zambia",
+          "solar_energy": 7174096.38,
+          "wind_energy": 295162.11,
+          "cooling_energy": 121758.1,
+          "score": 7347500.39,
+          "rank": 4
+        },
+        {
+          "country": "Chad",
+          "solar_energy": 7212616.23,
+          "wind_energy": 246689.09,
+          "cooling_energy": 124231.22,
+          "score": 7335074.1,
+          "rank": 5
+        }
+      ],
+      "best_country": "Cape Verde"
+    }
+  ]
+}

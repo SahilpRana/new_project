@@ -5,44 +5,48 @@ import pandas as pd
 import joblib
 from tensorflow.keras.models import load_model
 import os
+from fastapi.middleware.cors import CORSMiddleware
+from datetime import datetime
+import json
 
-# Default parameters for energy calculations
-DEFAULT_AREA = 1000.0       # m² for data center roof
-DEFAULT_ROTOR_AREA = 200.0  # m² for wind turbine
-DEFAULT_EFFICIENCY = 20     # % solar panel efficiency
+# Default parameters
+DEFAULT_AREA = 1000.0       # m²
+DEFAULT_ROTOR_AREA = 200.0  # m²
+DEFAULT_EFFICIENCY = 20     # %
+YEARS = 15
+MONTHS = YEARS * 12
+TOP_N = 5
 
-# Cooling factor mapping (temperature → n_factor)
+# Cooling factor mapping
 N_FACTORS = {
     0: 0.1, 5: 0.2, 10: 0.4, 15: 0.6, 20: 0.75,
     25: 0.9, 30: 1.0, 35: 1.1, 40: 1.25
 }
 
+# --- Helper functions ---
 def get_n_factor(temp):
     keys = sorted(N_FACTORS.keys())
     return np.interp(temp, keys, [N_FACTORS[k] for k in keys])
 
 def calculate_solar_energy(assd, area, efficiency):
-    daily_energy = assd * area * (efficiency / 100.0)  # kWh/day
-    return daily_energy * 30  # monthly estimate
+    return assd * area * (efficiency / 100.0) * 30
 
 def calculate_wind_energy(ws, rotor_area):
-    rho = 1.225  # air density kg/m³
-    cp = 0.4     # power coefficient
-    return 0.5 * rho * (ws ** 3) * rotor_area * cp * 24 * 30 / 1000  # kWh/month
+    rho = 1.225
+    cp = 0.4
+    return 0.5 * rho * (ws ** 3) * rotor_area * cp * 24 * 30 / 1000
 
 def calculate_cooling_energy(temp, area):
     n_factor = get_n_factor(temp)
-    return area * n_factor * 24 * 30 / 1000  # kWh/month
+    return area * n_factor * 24 * 30 / 1000
 
+# --- Predictor class (unchanged) ---
 class ChainedPredictor:
     def __init__(self, model_paths):
-        # Load models
         self.model_assd = load_model(model_paths['assd'])
         self.model_temp = joblib.load(model_paths['temp'])
         self.model_sp   = joblib.load(model_paths['sp'])
         self.model_wind = joblib.load(model_paths['wind'])
-
-        # Load encoders & scalers
         self.encoder1 = joblib.load(model_paths['encoder1'])
         self.scaler1  = joblib.load(model_paths['scaler1'])
         self.encoder2 = joblib.load(model_paths['encoder2'])
@@ -51,8 +55,6 @@ class ChainedPredictor:
         self.scaler3  = joblib.load(model_paths['scaler3'])
         self.encoder4 = joblib.load(model_paths['encoder4'])
         self.scaler4  = joblib.load(model_paths['scaler4'])
-
-        # Feature names (for reindexing)
         self.num_cols1 = list(self.scaler1.feature_names_in_)
         self.num_cols2 = list(self.scaler2.feature_names_in_)
         self.num_cols3 = list(self.scaler3.feature_names_in_)
@@ -129,15 +131,22 @@ class ChainedPredictor:
             'wind speed(m/s)': wind_pred
         }
 
-# FastAPI App Setup
+# --- FastAPI Setup ---
 app = FastAPI(title="Chained Predictor API with Energy Calculations")
 
-# Root route for quick check
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 @app.get("/")
 async def root():
-    return {"message": "API is running. Use POST /predict"}
+    return {"message": "API is running. Use POST /predict or /rank"}
 
-# Request schema
+# --- Schemas ---
 class PredictRequest(BaseModel):
     region: str
     country: str
@@ -147,7 +156,10 @@ class PredictRequest(BaseModel):
     rotor_area: float = DEFAULT_ROTOR_AREA
     efficiency: float = DEFAULT_EFFICIENCY
 
-# Model paths (relative to current file)
+class RankRequest(BaseModel):
+    region: str
+
+# --- Load models ---
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 model_paths = {
     'assd':     os.path.join(BASE_DIR, "Models", "assd_lstm_model.keras"),
@@ -163,17 +175,14 @@ model_paths = {
     'encoder4': os.path.join(BASE_DIR, "Models", "encoder4.pkl"),
     'scaler4':  os.path.join(BASE_DIR, "Models", "scaler4.pkl")
 }
-
-# Initialize predictor
 predictor = ChainedPredictor(model_paths)
 
-# Predict endpoint
+# --- Endpoints ---
+
+# Single prediction
 @app.post("/predict")
 async def predict(data: PredictRequest):
-    # Climate predictions
     result = predictor.predict(data.region, data.country, data.year, data.month)
-
-    # Energy calculations
     solar_energy = calculate_solar_energy(result['ASSD(kWh/m²/day)'], data.area, data.efficiency)
     wind_energy = calculate_wind_energy(result['wind speed(m/s)'], data.rotor_area)
     cooling_energy = calculate_cooling_energy(result['Temp(C)'], data.area)
@@ -188,3 +197,79 @@ async def predict(data: PredictRequest):
             "Net Energy Balance (kWh/month)": round(net_energy, 2)
         }
     }
+RANKINGS_PATH = os.path.join(BASE_DIR, "Datagathering", "RegionalRankings.json")
+
+@app.post("/rank")
+async def rank_region(data: RankRequest):
+    # Load existing RegionalRankings.json
+    if os.path.exists(RANKINGS_PATH):
+        with open(RANKINGS_PATH, "r") as f:
+            try:
+                regional_rankings = json.load(f)
+            except json.JSONDecodeError:
+                regional_rankings = {"data": []}
+    else:
+        regional_rankings = {"data": []}
+
+    # 1. Check if region already exists
+    existing = next((r for r in regional_rankings["data"] if r["region"].lower() == data.region.lower()), None)
+    if existing:
+        return existing  # Return cached data immediately
+
+    # 2. Compute rankings if not cached
+    df = pd.read_csv(os.path.join(BASE_DIR, "Datagathering", "Data.csv"))
+    df['Region'] = df['Region'].str.strip()
+    df['Country'] = df['Country'].str.strip()
+
+    countries = df[df['Region'].str.lower() == data.region.lower()]['Country'].unique()
+    if len(countries) == 0:
+        return {"error": f"No countries found for region: {data.region}"}
+
+    # Generate timestamps
+    now = datetime.now()
+    timestamps = pd.date_range(start=now, periods=MONTHS, freq='MS').strftime("%Y-%m").tolist()
+
+    results = []
+
+    # Loop through countries
+    for country in countries:
+        all_assd, all_temp, all_ws = [], [], []
+        for ts in timestamps:
+            year, month = map(int, ts.split('-'))
+            pred = predictor.predict(data.region, country, year, month)
+            all_assd.append(pred['ASSD(kWh/m²/day)'])
+            all_temp.append(pred['Temp(C)'])
+            all_ws.append(pred['wind speed(m/s)'])
+
+        # Energy totals
+        solar_total = np.sum([calculate_solar_energy(a, DEFAULT_AREA, DEFAULT_EFFICIENCY) for a in all_assd])
+        wind_total  = np.sum([calculate_wind_energy(w, DEFAULT_ROTOR_AREA) for w in all_ws])
+        cool_total  = np.sum([calculate_cooling_energy(t, DEFAULT_AREA) for t in all_temp])
+        score = solar_total + wind_total - cool_total
+
+        results.append({
+            "country": country,
+            "solar_energy": round(solar_total, 2),
+            "wind_energy": round(wind_total, 2),
+            "cooling_energy": round(cool_total, 2),
+            "score": round(score, 2)
+        })
+
+    # Rank results
+    df_result = pd.DataFrame(results).sort_values(by="score", ascending=False).reset_index(drop=True)
+    df_result["rank"] = df_result.index + 1
+    top_n = df_result.head(TOP_N).to_dict(orient="records")
+
+    result_data = {
+        "region": data.region,
+        "years_forecast": YEARS,
+        "top_countries": top_n,
+        "best_country": top_n[0]["country"]
+    }
+
+    # 3. Save new result to RegionalRankings.json
+    regional_rankings["data"].append(result_data)
+    with open(RANKINGS_PATH, "w") as f:
+        json.dump(regional_rankings, f, indent=2)
+
+    return result_data
