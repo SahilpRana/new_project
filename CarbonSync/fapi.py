@@ -52,9 +52,10 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 MODELS_DIR = os.path.join(BASE_DIR, "Models")
 
 DRIVE_MODELS = {
-    "temp.pkl": "https://drive.google.com/file/d/1pJEzxYzfYL8nsZInQoFEgYCTQrnGtrP5/view?usp=sharing",
-    "SP.pkl": "https://drive.google.com/file/d/17QdJ5wr0gj1ebhCpJ-J6AM2QCJb_yZ00/view?usp=sharing",         
-    "wind_speed.pkl": "https://drive.google.com/file/d/1btBovQXlj307sCbOU7jCLEph_VF1AHSA/view?usp=sharing" 
+    "assd_lstm_model.keras": "1xwT_E3ICZyvMpY4dyzcLSfjHNNo7lZWw",
+    "temp.pkl": "1pJEzxYzfYL8nsZInQoFEgYCTQrnGtrP5",
+    "SP.pkl": "17QdJ5wr0gj1ebhCpJ-J6AM2QCJb_yZ00",
+    "wind_speed.pkl": "1btBovQXlj307sCbOU7jCLEph_VF1AHSA"
 }
 
 def download_drive_models():
