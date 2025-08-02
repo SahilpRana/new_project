@@ -8,8 +8,11 @@ import os
 from fastapi.middleware.cors import CORSMiddleware
 from datetime import datetime
 import json
+import gdown
 
-# Default parameters
+# ======================
+# Default Parameters
+# ======================
 DEFAULT_AREA = 1000.0       # m²
 DEFAULT_ROTOR_AREA = 200.0  # m²
 DEFAULT_EFFICIENCY = 20     # %
@@ -23,7 +26,9 @@ N_FACTORS = {
     25: 0.9, 30: 1.0, 35: 1.1, 40: 1.25
 }
 
-# --- Helper functions ---
+# ======================
+# Helper Functions
+# ======================
 def get_n_factor(temp):
     keys = sorted(N_FACTORS.keys())
     return np.interp(temp, keys, [N_FACTORS[k] for k in keys])
@@ -40,7 +45,33 @@ def calculate_cooling_energy(temp, area):
     n_factor = get_n_factor(temp)
     return area * n_factor * 24 * 30 / 1000
 
-# --- Predictor class (unchanged) ---
+# ======================
+# Download models from Drive (Temp, SP, Wind only)
+# ======================
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+MODELS_DIR = os.path.join(BASE_DIR, "Models")
+
+DRIVE_MODELS = {
+    "temp.pkl": "https://drive.google.com/file/d/1pJEzxYzfYL8nsZInQoFEgYCTQrnGtrP5/view?usp=sharing",
+    "SP.pkl": "https://drive.google.com/file/d/17QdJ5wr0gj1ebhCpJ-J6AM2QCJb_yZ00/view?usp=sharing",         
+    "wind_speed.pkl": "https://drive.google.com/file/d/1btBovQXlj307sCbOU7jCLEph_VF1AHSA/view?usp=sharing" 
+}
+
+def download_drive_models():
+    os.makedirs(MODELS_DIR, exist_ok=True)
+    for filename, file_id in DRIVE_MODELS.items():
+        file_path = os.path.join(MODELS_DIR, filename)
+        if not os.path.exists(file_path):
+            print(f"Downloading {filename} from Google Drive...")
+            url = f"https://drive.google.com/uc?id={file_id}"
+            gdown.download(url, file_path, quiet=False)
+
+# Download before loading
+download_drive_models()
+
+# ======================
+# Predictor Class
+# ======================
 class ChainedPredictor:
     def __init__(self, model_paths):
         self.model_assd = load_model(model_paths['assd'])
@@ -131,7 +162,9 @@ class ChainedPredictor:
             'wind speed(m/s)': wind_pred
         }
 
-# --- FastAPI Setup ---
+# ======================
+# FastAPI Setup
+# ======================
 app = FastAPI(title="Chained Predictor API with Energy Calculations")
 
 app.add_middleware(
@@ -146,7 +179,9 @@ app.add_middleware(
 async def root():
     return {"message": "API is running. Use POST /predict or /rank"}
 
-# --- Schemas ---
+# ======================
+# Schemas
+# ======================
 class PredictRequest(BaseModel):
     region: str
     country: str
@@ -159,25 +194,28 @@ class PredictRequest(BaseModel):
 class RankRequest(BaseModel):
     region: str
 
-# --- Load models ---
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# ======================
+# Load models
+# ======================
 model_paths = {
-    'assd':     os.path.join(BASE_DIR, "Models", "assd_lstm_model.keras"),
-    'temp':     os.path.join(BASE_DIR, "Models", "temp.pkl"),
-    'sp':       os.path.join(BASE_DIR, "Models", "SP.pkl"),
-    'wind':     os.path.join(BASE_DIR, "Models", "wind_speed.pkl"),
-    'encoder1': os.path.join(BASE_DIR, "Models", "encoder1.pkl"),
-    'scaler1':  os.path.join(BASE_DIR, "Models", "scaler1.pkl"),
-    'encoder2': os.path.join(BASE_DIR, "Models", "encoder2.pkl"),
-    'scaler2':  os.path.join(BASE_DIR, "Models", "scaler2.pkl"),
-    'encoder3': os.path.join(BASE_DIR, "Models", "encoder3.pkl"),
-    'scaler3':  os.path.join(BASE_DIR, "Models", "scaler3.pkl"),
-    'encoder4': os.path.join(BASE_DIR, "Models", "encoder4.pkl"),
-    'scaler4':  os.path.join(BASE_DIR, "Models", "scaler4.pkl")
+    'assd':     os.path.join(MODELS_DIR, "assd_lstm_model.keras"),
+    'temp':     os.path.join(MODELS_DIR, "temp.pkl"),
+    'sp':       os.path.join(MODELS_DIR, "SP.pkl"),
+    'wind':     os.path.join(MODELS_DIR, "wind_speed.pkl"),
+    'encoder1': os.path.join(MODELS_DIR, "encoder1.pkl"),
+    'scaler1':  os.path.join(MODELS_DIR, "scaler1.pkl"),
+    'encoder2': os.path.join(MODELS_DIR, "encoder2.pkl"),
+    'scaler2':  os.path.join(MODELS_DIR, "scaler2.pkl"),
+    'encoder3': os.path.join(MODELS_DIR, "encoder3.pkl"),
+    'scaler3':  os.path.join(MODELS_DIR, "scaler3.pkl"),
+    'encoder4': os.path.join(MODELS_DIR, "encoder4.pkl"),
+    'scaler4':  os.path.join(MODELS_DIR, "scaler4.pkl")
 }
 predictor = ChainedPredictor(model_paths)
 
-# --- Endpoints ---
+# ======================
+# Endpoints
+# ======================
 
 # Single prediction
 @app.post("/predict")
@@ -197,6 +235,8 @@ async def predict(data: PredictRequest):
             "Net Energy Balance (kWh/month)": round(net_energy, 2)
         }
     }
+
+# Ranking endpoint
 RANKINGS_PATH = os.path.join(BASE_DIR, "Datagathering", "RegionalRankings.json")
 
 @app.post("/rank")
