@@ -55,7 +55,15 @@ DRIVE_MODELS = {
     "assd_lstm_model.keras": "1xwT_E3ICZyvMpY4dyzcLSfjHNNo7lZWw",
     "temp.pkl": "1pJEzxYzfYL8nsZInQoFEgYCTQrnGtrP5",
     "SP.pkl": "17QdJ5wr0gj1ebhCpJ-J6AM2QCJb_yZ00",
-    "wind_speed.pkl": "1btBovQXlj307sCbOU7jCLEph_VF1AHSA"
+    "wind_speed.pkl": "1btBovQXlj307sCbOU7jCLEph_VF1AHSA",
+    "encoder1.pkl": "18cDvazi0YMz2VEW6HRiqPms-HKCok5OA",
+    "scaler1.pkl": "1YvvAHEbZt3QGuwwSyR4Q-QbnWKiL0B4P",
+    "encoder2.pkl": "1Tnb7EFR48SydkWplwA-yFRgapCpydiuM",
+    "scaler2.pkl": "1_vWV_6KssIvjAqq609UutWy2xc8Zp4n1",
+    "encoder3.pkl": "101t-FuI5nQHvNIL-gpDs7CvRFuSCdDtE",
+    "scaler3.pkl": "1oZrOq2VGXQybUGN6leFhzNEkgxMf1bTn",
+    "encoder4.pkl": "1YpfTj0NKOu9CCpo9k8l-hnAk7Dj_MFo-",
+    "scaler4.pkl": "1UibquSt9h5hW-S6nUBNtcc044HaKCjW1"
 }
 
 def download_drive_models():
