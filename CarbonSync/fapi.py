@@ -249,8 +249,12 @@ async def predict(data: PredictRequest):
 async def rank_region(data: RankRequest):
     predictor = load_all_models()
 
-    df = pd.read_csv("Datagathering/Data.csv")
-    cache_path = "Datagathering/RegionalRankings.json"
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    DATA_PATH = os.path.join(BASE_DIR, "Datagathering", "Data.csv")
+    cache_path = os.path.join(BASE_DIR, "Datagathering", "RegionalRankings.json")
+
+    df = pd.read_csv(DATA_PATH)
+
     region_found = False
     if os.path.exists(cache_path):
         with open(cache_path, "r") as f:
