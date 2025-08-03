@@ -1,3 +1,16 @@
+certifi==2025.8.3
+charset-normalizer==3.4.2
+colorama==0.4.6
+filelock==3.18.0
+fsspec==2025.7.0
+huggingface-hub==0.34.3
+idna==3.10
+packaging==25.0
+PyYAML==6.0.2
+requests==2.32.4
+tqdm==4.67.1
+typing_extensions==4.14.1
+urllib3==2.5.0
 absl-py==2.3.1
 altair==5.5.0
 annotated-types==0.7.0
