@@ -250,6 +250,17 @@ async def rank_region(data: RankRequest):
     predictor = load_all_models()
 
     df = pd.read_csv("Datagathering/Data.csv")
+    cache_path = "Datagathering/RegionalRankings.json"
+    region_found = False
+    if os.path.exists(cache_path):
+        with open(cache_path, "r") as f:
+            cache_data = json.load(f)
+        for entry in cache_data.get("data", []):
+            if entry.get("region", "").lower() == data.region.lower():
+                region_found = True
+                return entry
+
+
     df['Region'] = df['Region'].str.strip()
     df['Country'] = df['Country'].str.strip()
 
