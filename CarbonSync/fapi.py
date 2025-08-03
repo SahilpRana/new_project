@@ -258,8 +258,10 @@ async def rank_region(data: RankRequest):
         for entry in cache_data.get("data", []):
             if entry.get("region", "").lower() == data.region.lower():
                 region_found = True
+                print(f"Returning cached rankings for region: {data.region}")
                 return entry
-
+            else:
+                print(f"Region {entry.get('region', '')} does not match requested region: {data.region}")       
 
     df['Region'] = df['Region'].str.strip()
     df['Country'] = df['Country'].str.strip()
