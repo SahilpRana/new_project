@@ -247,7 +247,6 @@ async def predict(data: PredictRequest):
 
 @app.post("/rank")
 async def rank_region(data: RankRequest):
-    predictor = load_all_models()
 
     BASE_DIR = os.path.dirname(os.path.abspath(__file__))
     DATA_PATH = os.path.join(BASE_DIR, "Datagathering", "Data.csv")
@@ -267,46 +266,50 @@ async def rank_region(data: RankRequest):
             else:
                 print(f"Region {entry.get('region', '')} does not match requested region: {data.region}")       
 
-    df['Region'] = df['Region'].str.strip()
-    df['Country'] = df['Country'].str.strip()
+    # Only load models if region not found in cache
+    if not region_found:
+        predictor = load_all_models()
 
-    countries = df[df['Region'].str.lower() == data.region.lower()]['Country'].unique()
-    if len(countries) == 0:
-        return {"error": f"No countries found for region: {data.region}"}
+        df['Region'] = df['Region'].str.strip()
+        df['Country'] = df['Country'].str.strip()
 
-    now = datetime.now()
-    timestamps = pd.date_range(start=now, periods=MONTHS, freq='MS').strftime("%Y-%m").tolist()
+        countries = df[df['Region'].str.lower() == data.region.lower()]['Country'].unique()
+        if len(countries) == 0:
+            return {"error": f"No countries found for region: {data.region}"}
 
-    results = []
-    for country in countries:
-        all_assd, all_temp, all_ws = [], [], []
-        for ts in timestamps:
-            year, month = map(int, ts.split('-'))
-            pred = predictor.predict(data.region, country, year, month)
-            all_assd.append(pred['ASSD(kWh/m²/day)'])
-            all_temp.append(pred['Temp(C)'])
-            all_ws.append(pred['wind speed(m/s)'])
+        now = datetime.now()
+        timestamps = pd.date_range(start=now, periods=MONTHS, freq='MS').strftime("%Y-%m").tolist()
 
-        solar_total = np.sum([calculate_solar_energy(a, DEFAULT_AREA, DEFAULT_EFFICIENCY) for a in all_assd])
-        wind_total = np.sum([calculate_wind_energy(w, DEFAULT_ROTOR_AREA) for w in all_ws])
-        cool_total = np.sum([calculate_cooling_energy(t, DEFAULT_AREA) for t in all_temp])
-        score = solar_total + wind_total - cool_total
+        results = []
+        for country in countries:
+            all_assd, all_temp, all_ws = [], [], []
+            for ts in timestamps:
+                year, month = map(int, ts.split('-'))
+                pred = predictor.predict(data.region, country, year, month)
+                all_assd.append(pred['ASSD(kWh/m²/day)'])
+                all_temp.append(pred['Temp(C)'])
+                all_ws.append(pred['wind speed(m/s)'])
 
-        results.append({
-            "country": country,
-            "solar_energy": round(solar_total, 2),
-            "wind_energy": round(wind_total, 2),
-            "cooling_energy": round(cool_total, 2),
-            "score": round(score, 2)
-        })
+            solar_total = np.sum([calculate_solar_energy(a, DEFAULT_AREA, DEFAULT_EFFICIENCY) for a in all_assd])
+            wind_total = np.sum([calculate_wind_energy(w, DEFAULT_ROTOR_AREA) for w in all_ws])
+            cool_total = np.sum([calculate_cooling_energy(t, DEFAULT_AREA) for t in all_temp])
+            score = solar_total + wind_total - cool_total
 
-    df_result = pd.DataFrame(results).sort_values(by="score", ascending=False).reset_index(drop=True)
-    df_result["rank"] = df_result.index + 1
-    top_n = df_result.head(TOP_N).to_dict(orient="records")
+            results.append({
+                "country": country,
+                "solar_energy": round(solar_total, 2),
+                "wind_energy": round(wind_total, 2),
+                "cooling_energy": round(cool_total, 2),
+                "score": round(score, 2)
+            })
 
-    return {
-        "region": data.region,
-        "years_forecast": YEARS,
-        "top_countries": top_n,
-        "best_country": top_n[0]["country"]
-    }
+        df_result = pd.DataFrame(results).sort_values(by="score", ascending=False).reset_index(drop=True)
+        df_result["rank"] = df_result.index + 1
+        top_n = df_result.head(TOP_N).to_dict(orient="records")
+
+        return {
+            "region": data.region,
+            "years_forecast": YEARS,
+            "top_countries": top_n,
+            "best_country": top_n[0]["country"]
+        }
